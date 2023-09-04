@@ -1,6 +1,7 @@
 library(ggplot2)
 library(brms)
-
+library(plotly)
+library(tidyverse)
 # clean up plots
 clean_plot <- function(...){
   clean_plot <- theme(panel.grid.major = element_blank(),
@@ -28,8 +29,7 @@ ggplot() +
   xlim(c(-pi,pi)) +
   ylim(c(0, dvon_mises(0, mu = mus[1], kappa = kappas[1]))) +
   geom_function(fun = dvon_mises, args = list(mu = mus[1], kappa = kappas[1]), color = "blue") +
-  annotate(
-    "text",label = "Precision", x = 0, y = 0.2,, size = 6) +
+  annotate(geom = "text",label = "Precision", x = 0, y = 0.2, size = 6) +
   annotate("segment", x = -0.7, xend = 0.7, 
            y = dvon_mises(-0.7, mu = mus[1], kappa = kappas[1]),
            yend = dvon_mises(0.7, mu = mus[1], kappa = kappas[1]),
@@ -56,8 +56,8 @@ weighted_vonMises_density <- function(x, mu, kappa, log = F, weight = 1){
 
 # sum of three von Mises densities for plotting the mixture density
 sum_vonMises_density <- function(x,mus,kappas,log = F, probs) {
-  sum_density <- dvon_mises(x, mu = mus[1], kappa = kappas[1])*probs[1]) +
-    dvon_mises(x, mu = mus[2], kappa = kappas[2])*probs[2]) 
+  sum_density <- dvon_mises(x, mu = mus[1], kappa = kappas[1]) * probs[1] +
+    dvon_mises(x, mu = mus[2], kappa = kappas[2]) * probs[2]
   return(sum_density)
 }
 
@@ -113,3 +113,32 @@ ggplot() +
            label = paste("Value on native Scale =",round(inv_logit_scaled(3.37),2)),
            x = -3, y = 0.9)
 
+
+# 3 dimensional plot of the softmax
+x1 <- seq(from = -6, to = 4, by = 0.1)
+x2 <- seq(from = -6, to = 8, by = 0.1)
+
+df_softmax <- expand.grid(
+  x1 = x1,
+  x2 = x2
+) %>% 
+  rowwise() %>% 
+  mutate(p1 = exp(x1)/(sum(exp(c(x1,x2,0)))),
+         p2 = exp(x2)/(sum(exp(c(x1,x2,0)))),
+         p3 = exp(0)/(sum(exp(c(x1,x2,0)))))
+
+
+fig <- plot_ly(data = df_softmax, x = ~x1, y = ~x2, z = ~p1, color = ~p2) %>% 
+  add_markers() %>% 
+  layout(scene = list(xaxis = list(title = 'Theta 1'),
+                      yaxis = list(title = 'Theta 2'),
+                      zaxis = list(title = 'Prob 1')),
+         annotations = list(
+           x = 1.13,
+           y = 1.05,
+           text = 'Miles/(US) gallon',
+           xref = 'paper',
+           yref = 'paper',
+           showarrow = FALSE
+         ))
+fig

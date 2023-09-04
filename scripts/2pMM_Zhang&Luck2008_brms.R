@@ -168,7 +168,7 @@ kappa_fixedFX <- exp(kappa_fixedFX)
 theta_fixedFX <- fixedEff[theta_cols,]
 
 # convert theta estimates into pMem estimates
-p_Mem_fixedFX <- gtools::inv.logit(theta_fixedFX)
+p_Mem_fixedFX <- inv_logit_scaled(theta_fixedFX)
 
 # print out parameter estimates
 kappa_fixedFX
