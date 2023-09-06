@@ -142,3 +142,57 @@ fig <- plot_ly(data = df_softmax, x = ~x1, y = ~x2, z = ~p1, color = ~p2) %>%
            showarrow = FALSE
          ))
 fig
+
+
+mixture_RThack <- function(x, parms, probs) {
+  sum_density <- dshifted_lnorm(x, meanlog = parms$lognorm["mean"],
+                                sdlog = parms$lognorm["sd"],
+                                shift = parms$lognorm["shift"]) * probs[1] +
+    dnorm(x, mean = parms$norm["mean"], sd = parms$norm["sd"]) * probs[2]
+  return(sum_density)
+}
+
+parms_RThack <- list(lognorm = c(mean = log(750), sd = 0.5, shift = log(200)),
+                     norm = c(mean = 750, sd = 5000))
+probs_RThack <- utilities::softmax(1.5)
+
+
+ggplot() +
+  xlim(0,3000) +
+  geom_function(fun = dshifted_lnorm,
+                args = list(meanlog = parms_RThack$lognorm["mean"],
+                            sdlog = parms_RThack$lognorm["sd"],
+                            shift = parms_RThack$lognorm["shift"]),
+                color = "blue") +
+  geom_function(fun = dnorm,
+                args = list(mean = parms_RThack$norm["mean"],
+                            sd = parms_RThack$norm["sd"]),
+                color = "red") +
+  geom_function(fun = mixture_RThack,
+                args = list(parms = parms_RThack, probs = probs_RThack),
+                linetype = "dashed") +
+  clean_plot() +
+  labs(x = "RT (ms)")
+
+
+mixture_Beta_density <- function(x,shapes1,shapes2,log = F, probs) {
+  sum_density <- dbeta(x, shape1 = shapes1[1], shape2 = shapes2[1]) * probs[1] +
+    dbeta(x, shape1 = shapes1[2], shape2 = shapes2[2]) * probs[2]
+  return(sum_density)
+}
+
+shapes1 <- c(2,1)
+shapes2 <- c(5,1)
+probs_beta <- utilities::softmax(2)
+
+ggplot() +
+  geom_function(fun = dbeta, args = list(shape1 = 1, shape2 = 1), color = "red") +
+  geom_function(fun = dbeta, args = list(shape1 = 2, shape2 = 5), color = "blue") +
+  geom_function(fun = mixture_Beta_density,
+                args = list(shapes1 = shapes1, shapes2 = shapes2, 
+                            probs = probs_beta),
+                linetype = "dashed") +
+  clean_plot() +
+  labs(x = "RT (from 0 to maxRT)",
+       y = "Probability of RT")
+
